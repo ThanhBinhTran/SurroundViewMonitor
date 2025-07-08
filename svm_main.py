@@ -81,47 +81,48 @@ def create_trackbar_control(width, height):
     cv2.createTrackbar('P3x', window_title, src_points[3][0], width , lambda x: on_changePoints(x, 'P3x'))
     cv2.createTrackbar('P3y', window_title, src_points[3][1], height, lambda x: on_changePoints(x, 'P3y'))
 
+    cv2.createTrackbar("image select", window_title, 0 , 3, on_selectedimage)
+    cv2.createTrackbar("blur radius", window_title, 10 , 100, on_blur_radius)
+
 def deep_image_copy(key):
     images[f'copy_{key}'] = images[key].copy()
 
-
-
 if __name__ == '__main__':
     imlib = ImageLib()
+    # create SVM image metadata including:
+    # image size
+    # car area size
+    # alignment region and its gradient masks
     imsvm = SVM_Lib()
 
+    height, width = imsvm.image_height, imsvm.image_width
     keys = {'front', 'back', 'left', 'right'}
 
     images = {key: imlib.load_image(f'image_{key}.jpg') for key in keys}
-    height, width = images['left'].shape[:2]
+
     save_and_break_app = False
     if not save_and_break_app:
         cv2.namedWindow(window_title)
         cv2.resizeWindow(window_title, 400, 600)
         create_trackbar_control(width, height)
 
-
-        cv2.createTrackbar("image select", window_title, 0 , 3, on_selectedimage)
-        cv2.createTrackbar("blur radius", window_title, 10 , 100, on_blur_radius)
     while True:
-        if not save_and_break_app:
-
-            blur_radius = cv2.getTrackbarPos('blur radius', window_title)
-
-
-
+        # step 1 set source, destination points
         imsvm.set_source_points(src_points=src_points)
+
+        # step 2: calculate perspective transformation base on source and destination points
         #findHomography
         imsvm.findPerspectiveTransform()
 
-        # warping image
+        # step 3: warping perspective image
         for key in keys:
             images[f'warp_{key}'] = imlib.warpPerspective(images[key], imsvm.perspectiveMatrix[key], (imsvm.image_width, imsvm.image_height))
 
-        # apply mask
+        # apply mask to see temp images
         for key in keys:
             images[f'masked_{key}'] = imsvm.apply_mask(image=images[f'warp_{key}'], mask=imsvm.mask[key])
 
+        # step 4: image stitching = alignment image and blending seam
         images['svm'] = imsvm.get_result_image(image_front=images['warp_front'], image_back=images['warp_back'],
                                            image_left=images['warp_left'], image_right=images['warp_right'])
         for key in keys:
