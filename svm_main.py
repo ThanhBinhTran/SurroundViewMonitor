@@ -6,7 +6,7 @@ from lib_SVM import *
 
 src_points = np.array( (
 # front image
-    [ 79, 273],
+    [ 85, 268],
     [445, 272],
     [473, 350],
     [ 48, 349],
@@ -30,7 +30,9 @@ src_points = np.array( (
 
 
 image_selected = 0
-window_title = 'Control'
+control_title = 'Control'
+zoom_title = 'Zoom points'
+image_selected_name = 'front'
 
 points = {
     'sx0': src_points[0][0], 'sy0': src_points[0][1],
@@ -40,8 +42,8 @@ points = {
 }
 def on_changePoints(val, trackbar_name):
     global src_points
+
     sec_idx = 1 if 'y' in trackbar_name else 0
-    first_idx = 0
     if '1' in trackbar_name:
         first_idx = 1
     elif '2' in trackbar_name:
@@ -51,38 +53,58 @@ def on_changePoints(val, trackbar_name):
     else:
         first_idx = 0
 
-    if 'y' in trackbar_name:
-        sec_idx = 1
     src_points[image_selected*4 + first_idx][sec_idx] = val
+    centre = src_points[image_selected*4 + first_idx]
+    x_start, y_start = centre[0] - 10, centre[1] - 10
+    x_end, y_end = centre[0] + 10, centre[1] + 10
+
+    roi = images[image_selected_name][y_start:y_end, x_start:x_end].copy()
+    print(image_selected_name)
+    scale = 20
+    
+    roi = imlib.resize_image_scale(roi, scale)
+    cv2.circle(roi, (10*scale,10*scale), radius=2, color=(0, 0, 255), thickness=-1)
+    cv2.imshow(zoom_title, roi)
 
 def on_blur_radius(x):
     global imsvm
     imsvm.create_mask(radius=x)
 
 def on_selectedimage(selected_button):
-    global image_selected
+    global image_selected, image_selected_name
     image_selected = selected_button
-    cv2.setTrackbarPos('P0x', window_title, src_points[0 + selected_button*4, 0])  # Set position to 75
-    cv2.setTrackbarPos('P0y', window_title, src_points[0 + selected_button*4, 1])  # Set position to 75
-    cv2.setTrackbarPos('P1x', window_title, src_points[1 + selected_button*4, 0])  # Set position to 75
-    cv2.setTrackbarPos('P1y', window_title, src_points[1 + selected_button*4, 1])  # Set position to 75
-    cv2.setTrackbarPos('P2x', window_title, src_points[2 + selected_button*4, 0])  # Set position to 75
-    cv2.setTrackbarPos('P2y', window_title, src_points[2 + selected_button*4, 1])  # Set position to 75
-    cv2.setTrackbarPos('P3x', window_title, src_points[3 + selected_button*4, 0])  # Set position to 75
-    cv2.setTrackbarPos('P3y', window_title, src_points[3 + selected_button*4, 1])  # Set position to 75
+    cv2.setTrackbarPos('P0x', control_title, src_points[0 + selected_button*4, 0])
+    cv2.setTrackbarPos('P0y', control_title, src_points[0 + selected_button*4, 1])
+    cv2.setTrackbarPos('P1x', control_title, src_points[1 + selected_button*4, 0])
+    cv2.setTrackbarPos('P1y', control_title, src_points[1 + selected_button*4, 1])
+    cv2.setTrackbarPos('P2x', control_title, src_points[2 + selected_button*4, 0])
+    cv2.setTrackbarPos('P2y', control_title, src_points[2 + selected_button*4, 1])
+    cv2.setTrackbarPos('P3x', control_title, src_points[3 + selected_button*4, 0])
+    cv2.setTrackbarPos('P3y', control_title, src_points[3 + selected_button*4, 1])
+    if image_selected == 0:
+        image_selected_name = 'front'
+    elif image_selected == 1:
+        image_selected_name = 'back'
+    elif image_selected == 2:
+        image_selected_name = 'left'
+    else:
+        image_selected_name = 'right'
 
 def create_trackbar_control(width, height):
-    cv2.createTrackbar('P0x', window_title, src_points[0][0], width , lambda x: on_changePoints(x, 'P0x'))
-    cv2.createTrackbar('P0y', window_title, src_points[0][1], height, lambda x: on_changePoints(x, 'P0y'))
-    cv2.createTrackbar('P1x', window_title, src_points[1][0], width , lambda x: on_changePoints(x, 'P1x'))
-    cv2.createTrackbar('P1y', window_title, src_points[1][1], height, lambda x: on_changePoints(x, 'P1y'))
-    cv2.createTrackbar('P2x', window_title, src_points[2][0], width , lambda x: on_changePoints(x, 'P2x'))
-    cv2.createTrackbar('P2y', window_title, src_points[2][1], height, lambda x: on_changePoints(x, 'P2y'))
-    cv2.createTrackbar('P3x', window_title, src_points[3][0], width , lambda x: on_changePoints(x, 'P3x'))
-    cv2.createTrackbar('P3y', window_title, src_points[3][1], height, lambda x: on_changePoints(x, 'P3y'))
+    cv2.namedWindow(control_title)
+    cv2.resizeWindow(control_title, 800, 600)
+    cv2.namedWindow(zoom_title)
+    cv2.createTrackbar('P0x', control_title, src_points[0][0], width , lambda x: on_changePoints(x, 'P0x'))
+    cv2.createTrackbar('P0y', control_title, src_points[0][1], height, lambda x: on_changePoints(x, 'P0y'))
+    cv2.createTrackbar('P1x', control_title, src_points[1][0], width , lambda x: on_changePoints(x, 'P1x'))
+    cv2.createTrackbar('P1y', control_title, src_points[1][1], height, lambda x: on_changePoints(x, 'P1y'))
+    cv2.createTrackbar('P2x', control_title, src_points[2][0], width , lambda x: on_changePoints(x, 'P2x'))
+    cv2.createTrackbar('P2y', control_title, src_points[2][1], height, lambda x: on_changePoints(x, 'P2y'))
+    cv2.createTrackbar('P3x', control_title, src_points[3][0], width , lambda x: on_changePoints(x, 'P3x'))
+    cv2.createTrackbar('P3y', control_title, src_points[3][1], height, lambda x: on_changePoints(x, 'P3y'))
 
-    cv2.createTrackbar("image select", window_title, 0 , 3, on_selectedimage)
-    cv2.createTrackbar("blur radius", window_title, 10 , 100, on_blur_radius)
+    cv2.createTrackbar("image select", control_title, 0 , 3, on_selectedimage)
+    cv2.createTrackbar("blur radius", control_title, 10 , 100, on_blur_radius)
 
 def deep_image_copy(key):
     images[f'copy_{key}'] = images[key].copy()
@@ -95,15 +117,14 @@ if __name__ == '__main__':
     # alignment region and its gradient masks
     imsvm = SVM_Lib()
 
-    height, width = imsvm.image_height, imsvm.image_width
+    
     keys = {'front', 'back', 'left', 'right'}
 
     images = {key: imlib.load_image(f'image_{key}.jpg') for key in keys}
-
+    height, width = images['front'].shape[:2]
     save_and_break_app = False
     if not save_and_break_app:
-        cv2.namedWindow(window_title)
-        cv2.resizeWindow(window_title, 400, 600)
+
         create_trackbar_control(width, height)
 
     while True:
@@ -149,8 +170,8 @@ if __name__ == '__main__':
             out_mask_image = imlib.resize_image_scale(image=out_mask_image, scale=0.12)
             images['svm'] = imlib.resize_image_scale(image=images['svm'], scale=0.51)
             imlib.imshow("Output", out_image)
-            imlib.imshow("Output_perspective_image", out_perspective_image)
-            imlib.imshow("Output_mask_image", out_mask_image)
+            #imlib.imshow("Output_perspective_image", out_perspective_image)
+            #imlib.imshow("Output_mask_image", out_mask_image)
             imlib.imshow("Output_svm_image", images['svm'])
         if cv2.waitKey(10) & 0xFF == 27:
             break

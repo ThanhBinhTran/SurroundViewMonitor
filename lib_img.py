@@ -70,6 +70,15 @@ class ImageLib:
    def imshow(self, title="output", image=None):
       cv2.imshow(title, image)
 
+   def imshowROI(self, image, title, centre, scale=5, offset= 10):
+    x_start, y_start = centre[0] - offset, centre[1] - offset
+    x_end, y_end = centre + offset, centre + offset
+
+    roi = image[y_start:y_end, x_start:x_end]
+    cv2.circle(roi, centre, radius=1, color=(0, 0, 255), thickness=-1)
+    self.resize_image_scale(roi, scale)
+    cv2.imshow(title, roi)
+   
    def warpPerspective(self, image, homographyMatric, warpImgSize):
       return cv2.warpPerspective(image, homographyMatric, warpImgSize)
    
