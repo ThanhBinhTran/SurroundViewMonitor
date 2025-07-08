@@ -117,22 +117,23 @@ if __name__ == '__main__':
         out_mask_image = imlib.stack_img_col_row([images['masked_front'], images['masked_back'], images['masked_left'], images['masked_right']], col=2, row=2)
 
         out_perspective_image = imlib.resize_image_scale(image=out_perspective_image, scale=0.12)
-        
+
         #imsvm.draw_region(image=images['svm'])
-        
-        out_mask_image = imlib.resize_image_scale(image=out_mask_image, scale=0.12)
-        images['svm'] = imlib.resize_image_scale(image=images['svm'], scale=0.51)
-        imlib.imshow("Output", out_image)
-        imlib.imshow("Output_perspective_image", out_perspective_image)
-        imlib.imshow("Output_mask_image", out_mask_image)
-        imlib.imshow("Output_svm_image", images['svm'])
-        break_app = True
-        if break_app:
+
+        save_and_break_app = False
+        if save_and_break_app:
             imlib.save_images(images=images, keys=['copy_front', 'copy_back', 'copy_left', 'copy_right',
                                              'warp_front', 'warp_back', 'warp_left', 'warp_right',
                                              'masked_front', 'masked_back', 'masked_left', 'masked_right',
                                              'svm'])
             break
+        else:
+            out_mask_image = imlib.resize_image_scale(image=out_mask_image, scale=0.12)
+            images['svm'] = imlib.resize_image_scale(image=images['svm'], scale=0.51)
+            imlib.imshow("Output", out_image)
+            imlib.imshow("Output_perspective_image", out_perspective_image)
+            imlib.imshow("Output_mask_image", out_mask_image)
+            imlib.imshow("Output_svm_image", images['svm'])
         if cv2.waitKey(10) & 0xFF == 27:
             break
     cv2.destroyAllWindows()

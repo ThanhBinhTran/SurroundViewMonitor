@@ -14,7 +14,7 @@ class SVM_Lib(BaseImagePoints):
 
         self.margin = margin
         self.set_margin()
-        
+
         self.srcPts = {}
         self.dstPts = {}
         self.perspectiveMatrix = {}
@@ -75,9 +75,10 @@ class SVM_Lib(BaseImagePoints):
         return (image*mask).astype(np.uint8)
 
     def get_result_image(self, image_front, image_back, image_left, image_right):
-        blended = (image_left * self.mask['left'] + image_front * (1 - self.mask['left'])).astype(np.uint8)
+        blended = cv2.bitwise_or(image_front,image_back)
+        blended = (image_left * self.mask['left'] + blended * (1 - self.mask['left']))
         blended = (image_right * self.mask['right'] + blended * (1 - self.mask['right'])).astype(np.uint8)
-        blended = (image_back * self.mask['back'] + blended * (1 - self.mask['back'])).astype(np.uint8)
+        #blended = (image_back * self.mask['back'] + blended * (1 - self.mask['back'])).astype(np.uint8)
         return blended
     
     def draw_region(self, image, linecolor = (0,0,255), thickness=2):
@@ -99,17 +100,7 @@ if __name__ == '__main__':
     blue_img   = np.full((svm.image_height, svm.image_width, 3), (255, 0, 0), dtype=np.uint8)   # Blue
     green_img  = np.full((svm.image_height, svm.image_width, 3), (0, 255, 0), dtype=np.uint8)   # Green
 
-    #red_img = svm.apply_mask(image=red_img, mask=svm.mask['front'])
-    #yellow_img = svm.apply_mask(image=yellow_img, mask=svm.mask['back'])
-    #blue_img = svm.apply_mask(image=blue_img, mask=svm.mask['left'])
-    #green_img = svm.apply_mask(image=green_img, mask=svm.mask['right'])
-    #out_image1 = cv2.bitwise_or(red_img,yellow_img)
-    #out_image1 = cv2.bitwise_or(out_image1,green_img)
-    #out_image1 = cv2.bitwise_or(out_image1,blue_img)
-    blended = (yellow_img * svm.mask['left'] + red_img * (1 - svm.mask['left'])).astype(np.uint8)
-    blended = (green_img * svm.mask['right'] + blended * (1 - svm.mask['right'])).astype(np.uint8)
-    blended = (blue_img * svm.mask['back'] + blended * (1 - svm.mask['back'])).astype(np.uint8)
-    #blended = imlib.resize_image_scale(blended,scale=0.3)
+    blended = svm.get_result_image(image_front=red_img, image_back=yellow_img, image_left=green_img, image_right=blue_img)
 
     # Display the images
     imlib.save_image(image=blended, name='svm_lib_test')
