@@ -78,7 +78,7 @@ class SVM_Lib(BaseImagePoints):
         blended = cv2.bitwise_or(image_front,image_back)
         blended = (image_left * self.mask['left'] + blended * (1 - self.mask['left']))
         blended = (image_right * self.mask['right'] + blended * (1 - self.mask['right'])).astype(np.uint8)
-        #blended = (image_back * self.mask['back'] + blended * (1 - self.mask['back'])).astype(np.uint8)
+
         return blended
     
     def draw_region(self, image, linecolor = (0,0,255), thickness=2):

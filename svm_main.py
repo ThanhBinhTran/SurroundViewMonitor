@@ -30,27 +30,56 @@ src_points = np.array( (
 
 
 image_selected = 0
+window_title = 'Control'
+
 points = {
     'sx0': src_points[0][0], 'sy0': src_points[0][1],
     'sx1': src_points[1][0], 'sy1': src_points[1][1],
     'sx2': src_points[2][0], 'sy2': src_points[2][1],
     'sx3': src_points[3][0], 'sy3': src_points[3][1],
 }
+def on_changePoints(val, trackbar_name):
+    global src_points
+    sec_idx = 1 if 'y' in trackbar_name else 0
+    first_idx = 0
+    if '1' in trackbar_name:
+        first_idx = 1
+    elif '2' in trackbar_name:
+        first_idx = 2
+    elif '3' in trackbar_name:
+        first_idx = 3
+    else:
+        first_idx = 0
+
+    if 'y' in trackbar_name:
+        sec_idx = 1
+    src_points[image_selected*4 + first_idx][sec_idx] = val
+
 def on_blur_radius(x):
     global imsvm
     imsvm.create_mask(radius=x)
 
 def on_selectedimage(selected_button):
     global image_selected
-    image_selected = selected_button 
-    cv2.setTrackbarPos('sx0', 'Control', src_points[0 + selected_button*4, 0])  # Set position to 75
-    cv2.setTrackbarPos('sy0', 'Control', src_points[0 + selected_button*4, 1])  # Set position to 75
-    cv2.setTrackbarPos('sx1', 'Control', src_points[1 + selected_button*4, 0])  # Set position to 75
-    cv2.setTrackbarPos('sy1', 'Control', src_points[1 + selected_button*4, 1])  # Set position to 75
-    cv2.setTrackbarPos('sx2', 'Control', src_points[2 + selected_button*4, 0])  # Set position to 75
-    cv2.setTrackbarPos('sy2', 'Control', src_points[2 + selected_button*4, 1])  # Set position to 75
-    cv2.setTrackbarPos('sx3', 'Control', src_points[3 + selected_button*4, 0])  # Set position to 75
-    cv2.setTrackbarPos('sy3', 'Control', src_points[3 + selected_button*4, 1])  # Set position to 75
+    image_selected = selected_button
+    cv2.setTrackbarPos('P0x', window_title, src_points[0 + selected_button*4, 0])  # Set position to 75
+    cv2.setTrackbarPos('P0y', window_title, src_points[0 + selected_button*4, 1])  # Set position to 75
+    cv2.setTrackbarPos('P1x', window_title, src_points[1 + selected_button*4, 0])  # Set position to 75
+    cv2.setTrackbarPos('P1y', window_title, src_points[1 + selected_button*4, 1])  # Set position to 75
+    cv2.setTrackbarPos('P2x', window_title, src_points[2 + selected_button*4, 0])  # Set position to 75
+    cv2.setTrackbarPos('P2y', window_title, src_points[2 + selected_button*4, 1])  # Set position to 75
+    cv2.setTrackbarPos('P3x', window_title, src_points[3 + selected_button*4, 0])  # Set position to 75
+    cv2.setTrackbarPos('P3y', window_title, src_points[3 + selected_button*4, 1])  # Set position to 75
+
+def create_trackbar_control(width, height):
+    cv2.createTrackbar('P0x', window_title, src_points[0][0], width , lambda x: on_changePoints(x, 'P0x'))
+    cv2.createTrackbar('P0y', window_title, src_points[0][1], height, lambda x: on_changePoints(x, 'P0y'))
+    cv2.createTrackbar('P1x', window_title, src_points[1][0], width , lambda x: on_changePoints(x, 'P1x'))
+    cv2.createTrackbar('P1y', window_title, src_points[1][1], height, lambda x: on_changePoints(x, 'P1y'))
+    cv2.createTrackbar('P2x', window_title, src_points[2][0], width , lambda x: on_changePoints(x, 'P2x'))
+    cv2.createTrackbar('P2y', window_title, src_points[2][1], height, lambda x: on_changePoints(x, 'P2y'))
+    cv2.createTrackbar('P3x', window_title, src_points[3][0], width , lambda x: on_changePoints(x, 'P3x'))
+    cv2.createTrackbar('P3y', window_title, src_points[3][1], height, lambda x: on_changePoints(x, 'P3y'))
 
 def deep_image_copy(key):
     images[f'copy_{key}'] = images[key].copy()
@@ -65,33 +94,21 @@ if __name__ == '__main__':
 
     images = {key: imlib.load_image(f'image_{key}.jpg') for key in keys}
     height, width = images['left'].shape[:2]
+    save_and_break_app = False
+    if not save_and_break_app:
+        cv2.namedWindow(window_title)
+        cv2.resizeWindow(window_title, 400, 600)
+        create_trackbar_control(width, height)
 
-    cv2.namedWindow('Control')
-    cv2.resizeWindow('Control', 400, 600)
 
-    for pt in points:
-        if 'x' in pt:
-            cv2.createTrackbar(pt, 'Control', points[pt], width, lambda x: None)
-        else:
-            cv2.createTrackbar(pt, 'Control', points[pt], height, lambda x: None)
-
-    cv2.createTrackbar("image select", 'Control', 0 , 3, on_selectedimage)
-    cv2.createTrackbar("blur radius", 'Control', 10 , 100, on_blur_radius)
+        cv2.createTrackbar("image select", window_title, 0 , 3, on_selectedimage)
+        cv2.createTrackbar("blur radius", window_title, 10 , 100, on_blur_radius)
     while True:
-        points['sx0'] = cv2.getTrackbarPos('sx0', 'Control')
-        points['sy0'] = cv2.getTrackbarPos('sy0', 'Control')
-        points['sx1'] = cv2.getTrackbarPos('sx1', 'Control')
-        points['sy1'] = cv2.getTrackbarPos('sy1', 'Control')
-        points['sx2'] = cv2.getTrackbarPos('sx2', 'Control')
-        points['sy2'] = cv2.getTrackbarPos('sy2', 'Control')
-        points['sx3'] = cv2.getTrackbarPos('sx3', 'Control')
-        points['sy3'] = cv2.getTrackbarPos('sy3', 'Control')
-        blur_radius = cv2.getTrackbarPos('blur radius', 'Control')
+        if not save_and_break_app:
 
-        src_points[image_selected*4 + 0] = [points['sx0'], points['sy0']]
-        src_points[image_selected*4 + 1] = [points['sx1'], points['sy1']]
-        src_points[image_selected*4 + 2] = [points['sx2'], points['sy2']]
-        src_points[image_selected*4 + 3] = [points['sx3'], points['sy3']]
+            blur_radius = cv2.getTrackbarPos('blur radius', window_title)
+
+
 
         imsvm.set_source_points(src_points=src_points)
         #findHomography
@@ -120,7 +137,7 @@ if __name__ == '__main__':
 
         #imsvm.draw_region(image=images['svm'])
 
-        save_and_break_app = False
+
         if save_and_break_app:
             imlib.save_images(images=images, keys=['copy_front', 'copy_back', 'copy_left', 'copy_right',
                                              'warp_front', 'warp_back', 'warp_left', 'warp_right',
